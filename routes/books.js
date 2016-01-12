@@ -1,5 +1,11 @@
+/* 
+ * string = 문자열 처리를 위해 추가
+ * multer = 파일 저장을 위해 추가
+ */
 var express = require('express');
+var path = require('path');
 var fs = require('fs');
+var S = require('string');
 var mysql = require('mysql');
 var router = express.Router();
 var connection = mysql.createConnection({
@@ -9,14 +15,11 @@ var connection = mysql.createConnection({
   'database' : 'sopt',
 });
 var multer = require('multer');
+
+// 사진 저장 경로 설정
 var storage = multer.diskStorage({  
   destination: function (req, file, cb) {
     cb(null, 'photos/');
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + ".jpg");
-    //cb(null, file.fieldname + '-' + Date.now() + ".jpg");
-    //cb(null, file.fieldname + '-' + Date.now() + "." + file.split('.').pop());
   }
 });
 var upload = multer({ 
@@ -24,91 +27,107 @@ var upload = multer({
 });
 
 /*
- * (POST) http://localhost:3000/books
- * 경매할 책을 등록한다.
- * test value : enddate -> 2016-12-31 23:59:59
+ * Method       : POST
+ * Path         : http://52.26.16.48:3000/books
+ * Description  : 판매하고자 하는 책을 등록합니다.
  */
-
-
 router.post('/', upload.single('img'), function(req, res, next) {
-  // id, univ, 빼고
+  // DB에 저장하기전에 ""(쌍따옴표를 없애기 위함)
+  // ex-> S('Yes it does!').replaceAll(' ', '').s; //'Yesitdoes!' 
+  //var id = S(req.body.id).replaceAll('"', '').s;
+  var bname = S(req.body.bname).replaceAll('"', '').s;
+  var isbn = S(req.body.isbn).replaceAll('"', '').s;
+  var nprice = S(req.body.nprice).replaceAll('"', '').s;
+  var mprice = S(req.body.mprice).replaceAll('"', '').s;
+  //var nuiv = S(req.body.univ).replaceAll('"', '').s;
+  var enddate = S(req.body.enddate).replaceAll('"', '').s;
+  var comment = S(req.body.comment).replaceAll('"', '').s;
+  
   connection.query('insert into Book (id, bname, isbn, nprice, mprice, univ, enddate, comment) values (?,?,?,?,?,?,?,?);',
-                   ['aaa', req.body.bname, req.body.isbn, req.body.nprice, req.body.mprice, 'bbb', req.body.enddate, req.body.comment], function (error, info) {
-    
-    // req 확인
-    //console.log(req);
-    //
+                   ['aaa', bname, isbn, nprice, mprice, 'bbb', enddate, comment], function (error, info) {
+
+  /*   connection.query('insert into Book (id, bname, isbn, nprice, mprice, univ, enddate, comment) values (?,?,?,?,?,?,?,?);',
+                 [id, bname, isbn, nprice, mprice, univ, enddate, comment], function (error, info) {
+  */
+  
+    // debug
+    // console.log(req);
+  
     if (error == null) {
-      
       var bnum;
       bnum = info.insertId;
       
-      //end date 확인
+      // debug (enddate 확인)
       console.log(req.body.enddate);
       
-      // 파일 이름 변경
+      // 파일 이름 변경 (클라이언트로부터 전송된 파일을 photos로 저장후 '(bnum).jpg'로 이름을 변경한다.)
       fs.rename(__dirname + '/../photos/' + req.file.filename, __dirname + '/../photos/' + bnum + '.jpg', function (err) {
         if (err) throw err;
-        console.log('renamed complete');
+        // debug
+        // console.log('renamed complete');
       });
 
-      res.status(200).json({ result : true, filename : req.file.filename });     
-      //res.status(200).json({ result : true });
+      res.status(200).json({ result : true });
       
     } else {
-      res.status(503).json({ result : false, message : 'do not regist', error });
-    
-      // req 확인
-      console.log(req);
-      //
+      // debug
+      // console.log(req);
+      // res.status(503).json({ result : false, message : 'server DB error', error });
     }
   });
 });
             
-  /* 살려놔!!!!!!!
-  connection.query('insert into Book (id, bname, isbn, nprice, mprice, univ, enddate, comment) values (?,?,?,?,?,?,?,?);',
-                   [req.body.id, req.body.bname, req.body.isbn, req.body.nprice, req.body.mprice, req.body.univ, req.body.enddate, req.body.comment], function (error, info) {
-    if (error == null) {
-      res.status(200).json({ result : true });
-    } else {
-      res.status(503).json({ result : false, message : 'do not regist', error });
-    }
-  });
-  */
-
 /*
- * (GET) http://localhost:3000/books
- * 경매되고 있는 책의 목록을 불러온다. (경매가 곧 끝나는 순서대로)
+ * Method       : GET
+ * Path         : http://52.26.16.48:3000/books
+ * Description  : 판매등록 되어있는 책의 목록을 불러옵니다.
  */
 router.get('/', function(req, res, next) {
 
-  connection.query('select bnum, bname, isbn, oprice, nprice, enddate from Book ' + 'order by enddate desc;', function (error, cursor) {
+  connection.query('select bnum, bname, isbn, nprice, mprice, enddate from Book ' + 'order by enddate desc;', function (error, cursor) {
     if (error == null) {
-      res.status(200).json({ result : true, cursor });
+      console.log(cursor);
+      res.status(200).json(cursor);
     } else {
-      res.status(503).json({ result : false, message : 'do not read book list', error });
+      // debug
+      // console.log(error);
+      // res.status(503).json({ result : false, message : 'Server DB error, do not read book list', error });
     }
   });
 });
 
 /*
- * (GET) http://localhost:3000/books/{book_id}
- * 책의 목록 중 선택한 책의 상세 정보를 불러온다.
+ * Method       : GET
+ * Path         : http://52.26.16.48:3000/books/{bnum}
+ * Description  : 책의 목록 중 선택한 책의 상세 정보를 불러옵니다.
  */
-router.get('/:book_id', function(req, res, next) {
+router.get('/:bnum', function(req, res, next) {
 
-  connection.query('select * from Book where bnum=?;', [req.params.book_id], function (error, cursor) {
+  connection.query('select * from Book where bnum=?;', [req.params.bnum], function (error, cursor) {
     if (error == null && cursor.length == 1) {
+      // result 전송 X
       res.status(200).json(cursor[0]);
-      /*
-      res.status(200).json({ result : true, bnum : cursor[0].bnum, bname : cursor[0].bname, isbn : cursor[0].isbn, oprice : cursor[0].oprice, 
-                           nprice : cursor[0].nprice, nuiv : cursor[0].univ, enddate : cursor[0].enddate, maxprice : cursor[0].maxprice});
-      res.status(200).json({ result : true, cursor[0] });          
-      */
     } else {
-      res.status(503).json({ result : false, message : 'can not find selected book', error });
+      // server DB load error
+      // res.status(503).json({ result : false, message : 'can not find selected book', error });
     }
   });
+});
+
+/*
+ * Method       : GET
+ * Path         : http://52.26.16.48:3000/books/picutre/{bnum}
+ * Description  : 책에 해당하는 사진을 불러옵니다.
+ */
+router.get('/picture/:bnum', function(req, res, next) {
+  
+  // res.status(200).sendFile(__dirname + '/../photos/' + req.params.book_id + '.jpg');
+  // debug
+  // console.log('C:\Users\JongMin\Documents\Study\SOPT\sopt_workspace\SecondBook_Server\photos\\' + req.params.bnum + '.jpg');
+
+  // 절대 경로로 응답
+  res.status(200).sendFile('C:\\Users\\JongMin\\Documents\\Study\\SOPT\\sopt_workspace\\SecondBook_Server\\photos\\' + req.params.bnum + '.jpg');
+  
 });
 
 module.exports = router;

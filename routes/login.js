@@ -9,7 +9,9 @@ var connection = mysql.createConnection({
 });
 
 /*
- * (POST) http://localhost:3000/login
+ * Method       : POST
+ * Path         : http://52.26.16.48:3000/login
+ * Description  : 로그인을 시도합니다. 
  */
 router.post('/', function(req, res, next) {
   connection.query('select * from Member where id=?;', [req.body.id], function (error, cursor) {

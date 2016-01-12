@@ -15,19 +15,25 @@ var connection = mysql.createConnection({
 });
 
 /*
- * (POST) http://localhost:3000/confirm/email
+ * Method       : POST
+ * Path         : http://52.26.16.48:3000/confirm/email
+ * Description  : 사용자 이메일로 인증번호를 요청받습니다.
  */
 router.post('/email', function(req, res, next) {
   
   // 1000~9999 난수(인증번호) 생성
   var confirmkey = Math.floor(Math.random()*(10000)) + 1;
-  
-  // Test> var email = '201101563@inu.ac.kr';
   var email = req.body.email;
+  // ex value -> confirmkey = 1249, email : 201101563@inu.ac.kr
   
   // debug
-  console.log('email is = ' + email);
+  // console.log('email = ' + email);
+  // console.log('confirmkey = ' +confirmkey);
   
+  /*
+   * 이메일 인증 요청을 처음한 경우 : 새로 인증번호를 만들어 DB에 저장한 후 인증메일을 보낸다.
+   * 이메일 인증 요청을 여러번 한 경우 : 새로운 인증번호를 DB에 UPDATE한 후 인증메일을 보낸다.
+   */
   connection.query('select * from Confirm where email=?;', [req.body.email], function (error, cursor) {
     if (error == null) {
       if (cursor.length == 0) {
@@ -56,10 +62,12 @@ router.post('/email', function(req, res, next) {
             });
 
             res.status(200).json({ result : true });
-            //console.log('인증번호 발송 -> email : ' + email + ', 인증번호 : ' + confirmkey);
+            // debug
+            // console.log('인증번호 발송 -> email : ' + email + ', 인증번호 : ' + confirmkey);
           } else {
             res.status(503).json({ result : false, message : 'Can not send Autho_Email' });
-            //console.log('인증번호 발송 실패');
+            // debug
+            // console.log('인증번호 발송 실패');
           }
         });
       } else {
@@ -87,10 +95,12 @@ router.post('/email', function(req, res, next) {
             });
 
             res.status(200).json({ result : true });
-            //console.log('인증번호 발송 -> email : ' + email + ', 인증번호 : ' + confirmkey);
+            // debug
+            // console.log('인증번호 발송 -> email : ' + email + ', 인증번호 : ' + confirmkey);
           } else {
             res.status(503).json({ result : false, message : 'Can not send Autho_Email' });
-            //console.log('인증번호 발송 실패');
+            // debug
+            // console.log('인증번호 발송 실패');
           }
         });
       }
@@ -98,14 +108,18 @@ router.post('/email', function(req, res, next) {
   })
 });
 
+
 /*
- * (POST) http://localhost:3000/confirm
+ * Method       : POST
+ * Path         : http://52.26.16.48:3000/confirm
+ * Description  : 이메일과 인증번호를 확인합니다.
  */
 router.post('/', function(req, res, next) {
   
   // debug
-  console.log('email = ' + req.body.email + ' | confirmkey = ' + req.body.confirmkey);
+  // console.log('email = ' + req.body.email + ' | confirmkey = ' + req.body.confirmkey);
   
+  // 사용자의 이메일과 인증번호를 DB와 확인합니다. 인증성공시 DB에서 인증번호와 이메일을 삭제합니다.
   connection.query('select * from Confirm where email=?;', [req.body.email], function (error, cursor) {
     if (error == null) {
       if (cursor[0].confirmkey == req.body.confirmkey) {
@@ -119,7 +133,8 @@ router.post('/', function(req, res, next) {
       }
     } else {
       res.status(503).json({ result : false, message : 'Do not exist confirmkey in DB' });
-      //console.log('인증번호가 DB에 존재하지 않음');
+      // debug
+      // console.log('인증번호가 DB에 존재하지 않음(인증메일을 요청해야함)');
     }
   });
 

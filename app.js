@@ -11,9 +11,10 @@ var join = require('./routes/join');
 var books = require('./routes/books');
 var deals = require('./routes/deals');
 var search = require('./routes/search');
+//var scheduler = require('./scheduler/scheduler');
 
 //
-var test = require('./routes/test');
+//var test = require('./routes/test');
 //
 
 var app = express();
@@ -38,7 +39,7 @@ app.use('/deals', deals);
 app.use('/search', search);
 
 //
-app.use('/test', test);
+//app.use('/test', test);
 //
 
 // catch 404 and forward to error handler
