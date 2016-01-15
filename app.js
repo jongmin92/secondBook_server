@@ -11,6 +11,8 @@ var join = require('./routes/join');
 var books = require('./routes/books');
 var deals = require('./routes/deals');
 var search = require('./routes/search');
+var notice = require('./routes/notice');
+
 //var scheduler = require('./scheduler/scheduler');
 
 //
@@ -37,6 +39,7 @@ app.use('/join', join);
 app.use('/books', books);
 app.use('/deals', deals);
 app.use('/search', search);
+app.use('/notice', notice);
 
 //
 //app.use('/test', test);

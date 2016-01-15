@@ -18,13 +18,20 @@ router.post('/', function(req, res, next) {
     if (cursor.length == 0) {
       // DB에 ID가 존재하지 않음
       res.status(404).json({ result : false, message : 'This ID is not exist' });
-    } else {
+    } 
+    else {
       if (cursor[0].pw == req.body.pw) {
-        //res.status(200).json({ result : true, id : cursor[0].id, name : cursor[0].name, htel : cursor[0].htel, email : cursor[0].email,
-        //univ : cursor[0].univ, pw : cursor[0].pw });
-                             
-        res.status(200).json({ result : true, id : cursor[0].id, name : cursor[0].name, htel : cursor[0].htel, email : cursor[0].email,
-                              univ : cursor[0].univ });
+        
+	// debug
+        console.log(req.body);
+        
+        connection.query('update Member set regid=? where id=?;', [req.body.regid, req.body.id], function (error, cursor) { 
+          // debug
+          // console.log('regid update 성공!');
+        });       
+
+        res.status(200).json({ result : true, id : cursor[0].id, name : cursor[0].name, htel : cursor[0].htel, email : cursor[0].email, 
+                              univ : cursor[0].univ, pw : cursor[0].pw }); 
       }
       else {
         // DB와 PW가 다름

@@ -1,5 +1,5 @@
-/* 
- * nodemailer = 인증 메일링을 위해 추가
+/*
+ * demailer = 인증 메일링을 위해 추가
  * mathjs = 난수 계산을 위해 추가
  */
 var express = require('express');
