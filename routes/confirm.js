@@ -108,7 +108,6 @@ router.post('/email', function(req, res, next) {
   })
 });
 
-
 /*
  * Method       : POST
  * Path         : http://52.26.16.48:3000/confirm

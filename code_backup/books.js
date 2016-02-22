@@ -7,7 +7,6 @@ var path = require('path');
 var fs = require('fs');
 var S = require('string');
 var mysql = require('mysql');
-var mkdirp = require('mkdirp');
 var router = express.Router();
 var connection = mysql.createConnection({
   'host' : 'aws-rds-mysql.chkoxmjtj4pn.us-west-2.rds.amazonaws.com',
@@ -36,10 +35,9 @@ var upload = multer({
  * Path         : http://52.26.16.48:3000/books
  * Description  : 판매하고자 하는 책을 등록합니다.
  */
-
-router.post('/', upload.array('img', 3), function(req, res, next) {
-
-// DB에 저장하기전에 ""(쌍따옴표를 없애기 위함)
+//router.post('/', upload.single('img'), function(req, res, next) {
+router.post('/', upload.array('img', 5), function(req, res, next) {
+  // DB에 저장하기전에 ""(쌍따옴표를 없애기 위함)
   // ex-> S('Yes it does!').replaceAll(' ', '').s; //'Yesitdoes!' 
   var id = S(req.body.id).replaceAll('"', '').s;
   var bname = S(req.body.bname).replaceAll('"', '').s;
@@ -50,10 +48,12 @@ router.post('/', upload.array('img', 3), function(req, res, next) {
   var univ = S(req.body.univ).replaceAll('"', '').s;
   var enddate = S(req.body.enddate).replaceAll('"', '').s;
   var comment = S(req.body.comment).replaceAll('"', '').s;
-  var photoepath = Date.now() + '_' + id;
+
+  // debug
+  console.log('IMG length : ' + req.files.length);
   
-  connection.query('insert into Book (id, bname, isbn, oprice, nprice, mprice, univ, enddate, comment, photopath) values (?,?,?,?,?,?,?,?,?,?);',
-                   [id, bname, isbn, oprice, nprice, mprice, univ, enddate, comment, photoepath], function (error, info) {
+  connection.query('insert into Book (id, bname, isbn, oprice, nprice, mprice, univ, enddate, comment) values (?,?,?,?,?,?,?,?,?);',
+                   [id, bname, isbn, oprice, nprice, mprice, univ, enddate, comment], function (error, info) {
 
     // debug
     //console.log(req);
@@ -64,26 +64,15 @@ router.post('/', upload.array('img', 3), function(req, res, next) {
       
       // debug (enddate 확인)
       //console.log(req.body.enddate);
-      
-      // debug
-      console.log('-------------------req.files-------------------');
-      console.log(req.files);
-      console.log('----------------------------------------------------');
-      
-      // 여러개의 사진을 저장할 폴더를 생성합니다.
-      mkdirp(__dirname + '/../photos/' + photoepath, function (err) {
-        if (err) console.error(err)
-        else console.log('mkdir success!');
+
+      /*
+      // 파일 이름 변경 (클라이언트로부터 전송된 파일을 photos로 저장후 '(bnum).jpg'로 이름을 변경한다.)
+      fs.rename(__dirname + '/../photos/' + req.file.filename, __dirname + '/../photos/' + bnum + '.jpg', function (err) {
+        if (err) throw err;
+        // debug
+        // console.log('renamed complete');
       });
-      
-      for (var i=0; i<req.files.length; i++) {
-        // 파일 이름 변경 (클라이언트로부터 전송된 파일을 'photos/' + picturepath 로 저장후 '().jpg'로 이름을 변경한다.)
-        fs.rename(__dirname + '/../photos/' + req.files[i].filename, __dirname + '/../photos/' + photoepath + '/' + i + '.jpg', function (err) {
-          if (err) throw err;
-          // debug
-          // console.log('renamed complete');
-        });        
-      }
+      */
       
       res.status(200).json({ result : true });
 
@@ -102,7 +91,7 @@ router.post('/', upload.array('img', 3), function(req, res, next) {
  */
 router.get('/', function(req, res, next) {
 
-  connection.query('select bnum, bname, isbn, univ, oprice, nprice, mprice, enddate, photopath from Book ' + 'order by enddate asc;', function (error, cursor) {
+  connection.query('select bnum, bname, isbn, univ, oprice, nprice, mprice, enddate from Book ' + 'order by enddate asc;', function (error, cursor) {
     if (error == null) {
       console.log(cursor);
       res.status(200).json(cursor);
@@ -153,35 +142,18 @@ router.get('/:bnum', function(req, res, next) {
 
 /*
  * Method       : GET
- * Path         : http://52.26.16.48:3000/books/photo/main/{photopath}
- * Description  : 책에 해당하는 대표사진을 불러옵니다.
- */
-router.get('/photo/main/:photopath', function(req, res, next) {
-
-  // EC2에서의 코드
-  // res.status(200).sendFile(path.join(__dirname, '..', 'photos', req.params.photopath + '0.jpg'));
-  // debug
-  // res.status(200).sendFile(path.join(__dirname, '..', 'photos', req.params.photopath + '0.jpg'));
-
-  // 절대 경로로 응답
-  res.status(200).sendFile('C:\\Users\\JongMin\\Documents\\Study\\SOPT\\sopt_workspace\\SecondBook_Server\\photos\\' + req.params.photopath + '\\' + '0.jpg');
-  
-});
-
-/*
- * Method       : GET
- * Path         : http://52.26.16.48:3000/books/photo/{photopath}/{pnum}
+ * Path         : http://52.26.16.48:3000/books/picutre/{bnum}
  * Description  : 책에 해당하는 사진을 불러옵니다.
  */
-router.get('/photo/:photopath/:pnum', function(req, res, next) {
+router.get('/picture/:bnum', function(req, res, next) {
 
   // EC2에서의 코드
   // res.status(200).sendFile(path.join(__dirname, '..', 'photos', req.params.bnum + '.jpg'));
   // debug
   // res.status(200).sendFile(path.join(__dirname, '..', 'photos', req.params.bnum + '.jpg'));
-  
+
   // 절대 경로로 응답
-  res.status(200).sendFile('C:\\Users\\JongMin\\Documents\\Study\\SOPT\\sopt_workspace\\SecondBook_Server\\photos\\' + req.params.photopath + '\\' + req.params.pnum + '.jpg');
+  res.status(200).sendFile('C:\\Users\\JongMin\\Documents\\Study\\SOPT\\sopt_workspace\\SecondBook_Server\\photos\\' + req.params.bnum + '.jpg');
 
 });
 
