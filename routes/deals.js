@@ -99,8 +99,13 @@ router.post('/', function(req, res, next) {
             });
             // debug
             console.log("구매자, 판매자에게 푸시 (서로의 연락처 교환)");
+<<<<<<< HEAD
             console.log('sellREGID : ', sellREGID);
             console.log('buyREGID : ', buyREGID);
+=======
+            // console.log('sellREGID : ', sellREGID);
+            // console.log('buyREGID : ', buyREGID);
+>>>>>>> origin/master
           
           // 경매 설정된 최대 가격과 현재 업데이트한 가격이 다를 경우 (낙찰X)
           // 판매자에게만 푸시 (알림만)
@@ -120,7 +125,11 @@ router.post('/', function(req, res, next) {
               });
               
               //debug
+<<<<<<< HEAD
               console.log(registrationIds);
+=======
+              //console.log(registrationIds);
+>>>>>>> origin/master
             });
           }
 
@@ -134,6 +143,9 @@ router.post('/', function(req, res, next) {
     }
   });
 });
+<<<<<<< HEAD
 
+=======
+>>>>>>> origin/master
 
 module.exports = router;

@@ -22,7 +22,11 @@ router.post('/', function(req, res, next) {
     else {
       if (cursor[0].pw == req.body.pw) {
         
+<<<<<<< HEAD
         //debug
+=======
+	// debug
+>>>>>>> origin/master
         console.log(req.body);
         
         connection.query('update Member set regid=? where id=?;', [req.body.regid, req.body.id], function (error, cursor) { 
